@@ -1,0 +1,21 @@
+<#
+.Synopsis
+   Validate CSV path
+.DESCRIPTION
+   This script is used to validate CSV path
+.EXAMPLE
+   test_path -path C:\Demo
+#>
+
+function test_path
+{
+
+param
+(
+[Parameter(mandatory = $true)]
+[ValidateScript({if(Test-Path $_){$true}else{Throw "invalid path $_"}})]
+$path
+)
+
+
+}
