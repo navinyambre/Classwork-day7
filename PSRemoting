@@ -1,0 +1,24 @@
+#SET Firewall rule
+New-NetFirewallRule -DisplayName "Windows Remote Management (HTTPS-In)" -Name "Windows Remote Management (HTTPS-In)" -Profile Any -LocalPort 5986 -Protocol TCP
+
+$username = 'administrator'
+$password = 'ntms123#' | ConvertTo-SecureString -AsPlainText -Force
+$cred = New-Object pscredential -ArgumentList $username, $password
+
+#Create new PSsession to skip CA and CN check
+$pssession = New-PSSessionOption -SkipCACheck -SkipCNCheck
+
+#Create selfsigned certificate for your computer
+$Cert = New-SelfSignedCertificate -CertstoreLocation Cert:\LocalMachine\My -DnsName "SRV-shwetank"
+
+
+Export-Certificate  -Cert $Cert -FilePath "C:\tmp\cert"
+
+
+New-Item -Path WSMan:\LocalHost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint –Force
+Set-Item wsman:\localhost\Client\TrustedHosts -Value 192.168.2.21 -Concatenate -Force
+Set-Item wsman:\localhost\Client\TrustedHosts -Value WIN-482CDBNSSTQ -Concatenate -Force
+
+Set-NetConnectionProfile -NetworkCategory Private
+cd wsman:
+Enter-PSSession -ComputerName 'WIN-482CDBNSSTQ' -Credential $cred -Port 5986 -UseSSL -SessionOption $pssession
